@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import './App.css';
+import './App.scss';
 import { app, dialog } from './electron-ts';
+import { Button } from '@mui/material';
 
 function App() {
   const [currentRAM, setCurrentRAM] = useState('');
@@ -23,7 +24,11 @@ function App() {
       <br />
       RAM free: {currentRAM}
       <br />
-      <button onClick={openFile}>Open file</button>
+      <Button variant="outlined" onClick={openFile}>Open file</Button>
+      <h1 className="text-3xl font-bold underline">
+        Hello world!
+      </h1>
+      <Button variant='contained'>click me</Button>
     </div>
   );
 }
