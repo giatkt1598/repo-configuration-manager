@@ -25,7 +25,7 @@ declare namespace ElectronTs {
       TouchBarSlider,
       TouchBarSpacer,
       WebRequest,
-    } from "electron/main";
+    } from 'electron/main';
 
     // Taken from `RemoteMainInterface`
     export var app: Electron.App;
@@ -71,7 +71,7 @@ declare namespace ElectronTs {
 }
 
 interface NodeRequireFunction {
-  (moduleName: "@electron/remote"): typeof ElectronTs.Remote;
+  (moduleName: '@electron/remote'): typeof ElectronTs.Remote;
 }
 
 interface NodeRequire extends NodeRequireFunction {}

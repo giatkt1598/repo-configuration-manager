@@ -1,0 +1,98 @@
+import {
+  ReactNode,
+  createContext,
+  createRef,
+  useContext,
+  useState,
+} from 'react';
+import { ProjectService } from '../services/project.service';
+import { Project } from '../models';
+import { ConfirmPopup, ConfirmPopupProps } from '../components/confirm-popup';
+
+interface DataState {
+  projects: Project[];
+  getProjects: () => void;
+  header?: ReactNode;
+  setHeader: (header: ReactNode) => void;
+  project?: Project;
+  setProject: React.Dispatch<React.SetStateAction<Project | undefined>>;
+  getProjectById: (id: string) => Project | undefined;
+  showPopupConfirm: (option: ShowPopupConfirmOption) => void;
+}
+
+const initialState: DataState = {
+  projects: [],
+  getProjects: () => {},
+  setHeader: () => {},
+  setProject: () => {},
+  getProjectById: () => undefined,
+  showPopupConfirm: () => {},
+};
+
+const DataContext = createContext(initialState);
+
+const useData = () => useContext(DataContext);
+
+const DataProvider = ({ children }: { children: ReactNode }) => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [header, setHeader] = useState<ReactNode>(null);
+  const [project, setProject] = useState<Project>();
+  const [openPopup, setOpenPopup] = useState(false);
+  const [popup, setPopup] = useState<ConfirmPopupProps>({
+    open: false,
+    setOpen: () => {},
+  });
+
+  const getProjects = () => {
+    setProjects(ProjectService.getList());
+  };
+
+  const getById = (id: string) => {
+    const p = ProjectService.getById(id);
+    setProject(p);
+    return p;
+  };
+
+  const showPopupConfirm = (option: ShowPopupConfirmOption) => {
+    setOpenPopup(true);
+    setPopup({
+      message: option.message || 'Are you confirm?',
+      title: option.title || 'Confirm',
+      open: true,
+      setOpen: setOpenPopup,
+      onConfirm: option.onConfirm,
+      onCancel: option.onCancel,
+    });
+  }
+
+  return (
+    <DataContext.Provider
+      value={{
+        projects,
+        getProjects,
+        header,
+        setHeader,
+        setProject,
+        project,
+        getProjectById: getById,
+        showPopupConfirm,
+      }}
+    >
+      {children}
+
+      <ConfirmPopup
+        {...popup}
+        open={openPopup}
+      ></ConfirmPopup>
+    </DataContext.Provider>
+  );
+};
+
+export { DataProvider, useData };
+
+interface ShowPopupConfirmOption {
+    title?: string;
+    message?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+}
