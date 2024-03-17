@@ -1,6 +1,6 @@
 import 'react-toastify/dist/ReactToastify.css';
 import './App.scss';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/app-layout';
 import { ProjectPage } from './pages/project';
 import { LINK_PROJECT, LINK_PROJECT_DETAIL } from './constants/app-link';
@@ -8,7 +8,7 @@ import { ProjectDetailPage } from './pages/project-detail';
 function App() {
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path={'/'} element={<AppLayout />}>
           <Route path={LINK_PROJECT} element={<ProjectPage />} />
@@ -16,7 +16,7 @@ function App() {
         </Route>
       </Routes>
 
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
