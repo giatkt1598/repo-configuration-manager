@@ -1,7 +1,6 @@
 import {
   ReactNode,
   createContext,
-  createRef,
   useContext,
   useEffect,
   useState,
@@ -49,13 +48,14 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const currentPath = window.localStorage.getItem('CURRENT_PATH');
-    if (currentPath) {
+    if (currentPath && currentPath !== '/') {
       navigate(currentPath);
     }
-  }, []);
 
+  }, []);
+  
   useEffect(() => {
-    location.pathname !== '/' && window.localStorage.setItem('CURRENT_PATH', location.pathname);
+    window.localStorage.setItem('CURRENT_PATH', location.pathname);
   }, [location]);
 
   const getProjects = () => {
