@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "concurrently -k \"cross-env BROWSER=none react-scripts start\" \"wait-on tcp:3000 && electron .\"",
-    "build": "react-scripts build && electron-builder -c.extraMetadata.main=build/electron.js"
+    "build": "react-scripts build && electron-builder --win portable -c.extraMetadata.main=build/electron.js"
   },
   "dependencies": {
     "@electron/remote": "^2.1.2",

@@ -61,6 +61,17 @@ export const AddProject = (props: { onClose: () => void }) => {
   }
 
   const onSubmit: SubmitHandler<Project> = (data) => {
+    data.configs ??= [];
+    data.configVariants ??= [];
+    data.configVariants.forEach(variant => {
+      variant.values = variant.values.filter(x => data.configs.find(config => config.id === x.repoConfigId));
+
+      data.configs.forEach(config => {
+        if (!variant.values.find(x => x.repoConfigId === config.id)) {
+          variant.values.push({id: CommonHelper.newId(), repoConfigId: config.id, value: ''});
+        }
+      })
+    });
     if (data.id) {
       ProjectService.update(data);
     } else {
