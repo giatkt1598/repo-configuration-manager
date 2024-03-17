@@ -3,11 +3,13 @@ import {
   createContext,
   createRef,
   useContext,
+  useEffect,
   useState,
 } from 'react';
 import { ProjectService } from '../services/project.service';
 import { Project } from '../models';
 import { ConfirmPopup, ConfirmPopupProps } from '../components/confirm-popup';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface DataState {
   projects: Project[];
@@ -28,12 +30,14 @@ const initialState: DataState = {
   getProjectById: () => undefined,
   showPopupConfirm: () => {},
 };
-
 const DataContext = createContext(initialState);
 
 const useData = () => useContext(DataContext);
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [header, setHeader] = useState<ReactNode>(null);
   const [project, setProject] = useState<Project>();
@@ -42,6 +46,17 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
     open: false,
     setOpen: () => {},
   });
+
+  useEffect(() => {
+    const currentPath = window.localStorage.getItem('CURRENT_PATH');
+    if (currentPath) {
+      navigate(currentPath);
+    }
+  }, []);
+
+  useEffect(() => {
+    location.pathname !== '/' && window.localStorage.setItem('CURRENT_PATH', location.pathname);
+  }, [location]);
 
   const getProjects = () => {
     setProjects(ProjectService.getList());
