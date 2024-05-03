@@ -5,7 +5,7 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import { useData } from '../contexts/data.context';
-import { Button, Divider, IconButton, Stack, Switch, TextField } from '@mui/material';
+import { Button, Divider, IconButton, Stack, TextField } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useParams } from 'react-router-dom';
 import {fs} from '../electron-ts';
@@ -19,6 +19,7 @@ import CircleIcon from '@mui/icons-material/Circle';
 
 export const ProjectDetailPage = () => {
   const projectId = useParams().id;
+  const [pageKey, setPageKey] = useState(1);
   const { setHeader, project, setProject, getProjectById, showPopupConfirm } = useData();
   const [currentApplyVariantId, setCurrentApplyVariantId] = useState<string | undefined>('');
   const [activeTab, setActiveTab] = useState(0);
@@ -36,37 +37,82 @@ export const ProjectDetailPage = () => {
     checkCurrentApplyVariant();
   }, [project]);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-    getProjectById(projectId!);
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(+newValue);
   };
 
   const initDefaultConfigs = (project: Project) => {
-    if (!project || project.configVariants?.length > 0) return;
+    if (!project) return;
     
     project.configVariants ??= [];
-    const configVariant: RepoConfigVariant = {
-      isDefault: true,
-      id: CommonHelper.newId(),
-      name: 'Default',
-      values: [],
-    };
+    const isNew = project.configVariants.length < 1;
+    if (isNew) {
+      project.configVariants.push({
+        isDefault: true,
+        id: CommonHelper.newId(),
+        name: 'Default',
+        values: [],
+      });
+    }
+
     project.configs.forEach(({filePath, id}) => {
       const path = project.directory + filePath;
       if (!fs.existsSync(path)) return;
+      
       const config = fs.readFileSync(path).toString();
-      configVariant.values.push({
-        id: CommonHelper.newId(),
-        repoConfigId: id,
-        value: config,
-      });
+      for(const configVariant of project.configVariants) {
+        const existedConfigValue = configVariant.values.find(x => x.repoConfigId === id);
+        if (!existedConfigValue) {
+          configVariant.values.push({
+            id: CommonHelper.newId(),
+            repoConfigId: id,
+            value: config,
+            isTemp: isNew ? undefined : true,
+          });
+        } else if (!existedConfigValue.value) {
+          existedConfigValue.value = config;
+          existedConfigValue.isTemp = true;
+        }
+      }
     });
-    project.configVariants.push(configVariant);
 
     setProject(project);
+    if (isNew) {
+      ProjectService.update(project!);
+    }
+  }
+
+  function resetToCurrent() {
+    if (!project) return;
+
+    project.configs.forEach(({filePath, id}) => {
+      const path = project.directory + filePath;
+      if (!fs.existsSync(path)) return;
+      const configValue = fs.readFileSync(path).toString();
+      const repoConfig = project.configVariants[activeTab].values.find(x => x.repoConfigId === id);
+      if (repoConfig) {
+        repoConfig.value = configValue;
+        
+      } else {
+        project.configVariants[activeTab].values.push({
+          id: CommonHelper.newId(),
+          value: configValue,
+          repoConfigId: project.configVariants[activeTab].id,
+        });
+      }
+    });
+    setProject({...project});
+    checkCurrentApplyVariant();
+    toast('Reset done!', {type:'success', position: 'bottom-right'});
+    setPageKey(p => p+1);
   }
 
   function handleSave() {
+    project?.configVariants.forEach(v => {
+      v.values.forEach((c) => {
+        delete c.isTemp;
+      });
+    });
     ProjectService.update(project!);
     getProjectById(projectId!);
     checkCurrentApplyVariant();
@@ -199,11 +245,11 @@ export const ProjectDetailPage = () => {
   
 
   return (
-    <div>
+    <div key={pageKey}>
       <Box sx={{ width: '100%', typography: 'body1' }}>
         <TabContext value={activeTab + ''}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex' }}>
-            <TabList onChange={handleChange} aria-label="lab API tabs example" variant='scrollable' scrollButtons='auto'>
+            <TabList onChange={handleTabChange} aria-label="lab API tabs example" variant='scrollable' scrollButtons='auto'>
               {project.configVariants?.map((variant, idx) => (
                 <Tab key={variant.id} label={
                   <span>
@@ -237,7 +283,7 @@ export const ProjectDetailPage = () => {
                     setProject(p => {
                       p!.configVariants[activeTab].isDefault = e.target.checked;
 
-                      e.target.checked && p?.configVariants.filter((_, idx) => idx !== activeTab).forEach(item => item.isDefault = false);                
+                      e.target.checked && p?.configVariants.filter((_, idx) => idx != activeTab).forEach(item => item.isDefault = false);                
                       return {...p!};
                     });
                   }}/>
@@ -250,7 +296,9 @@ export const ProjectDetailPage = () => {
                 <IconButton onClick={deleteConfigVariant}>
                   <DeleteIcon className='text-red-500' />
                 </IconButton>
+
                 <Button variant='outlined' onClick={discardChange}>Discard Changes</Button>
+                <Button variant='outlined' onClick={resetToCurrent}>Reset To Current</Button>
                 <Button variant='outlined' onClick={handleSave}>Save</Button>
                 <Button variant='contained' onClick={applyConfigVariant}>Apply</Button>
               </Stack>
@@ -261,7 +309,10 @@ export const ProjectDetailPage = () => {
                 {
                   variant.values.map((val) => (
                     <Stack key={val.id} direction={'column'}>
-                      <div className='font-bold'>{project.configs.find(x => x.id=== val.repoConfigId)?.filePath}</div>
+                      <div className='font-bold' title={val.isTemp ? "New file config, it's fetched current file in folder, not saved!" : undefined}>
+                        {project.configs.find(x => x.id=== val.repoConfigId)?.filePath}
+                        {val.isTemp && <span className='text-red-500'>&nbsp;*</span>}
+                      </div>
                       <TextField multiline maxRows={15} defaultValue={val.value} onChange={e => {
                         val.value = e.target.value
                       }} />
