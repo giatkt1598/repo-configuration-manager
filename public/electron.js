@@ -4,10 +4,26 @@ import electronRemote from '@electron/remote/dist/src/main/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+const gotTheLock = app.requestSingleInstanceLock();
+let myWindow = null;
+if (!gotTheLock) {
+  app.quit();
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory, additionalData) => {
+  if (myWindow) {
+    if (myWindow.isMinimized()) myWindow.restore()
+    myWindow.focus()
+  }
+})
+
 electronRemote.initialize();
 function createWindow() {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
   // Create the browser window.
-  const win = new BrowserWindow({
+  myWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     autoHideMenuBar: true,
@@ -18,11 +34,9 @@ function createWindow() {
       webSecurity: false,
     },
   })
-  electronRemote.enable(win.webContents);
+  electronRemote.enable(myWindow.webContents);
 
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  win.loadURL(
+  myWindow.loadURL(
     isDev
       ? 'http://localhost:3000'
       : `file://${path.join(__dirname, '../build/index.html')}`

@@ -91,5 +91,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "build": {
+    "productName": "Repo Config Manager",
+    "win": {
+      "icon": "build/favicon.ico"
+    }
   }
 }
