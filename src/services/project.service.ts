@@ -1,8 +1,12 @@
+import { app, fs } from '../electron-ts';
 import { Project } from '../models';
 import { CommonHelper } from '../utilities/common-helper';
 
 export class ProjectService {
   private static readonly TABLE = 'Project';
+  private static readonly DATA_FOLDER = `${app.getPath('documents')}\\RepoConfigManager`;
+  private static readonly DATA_FILE = `${this.DATA_FOLDER}\\data.json`;
+
   static insert(project: Project) {
     const projects = this.getList();
     project.id = CommonHelper.newId();
@@ -34,5 +38,13 @@ export class ProjectService {
 
   private static setList(projects: Project[]) {
     localStorage.setItem(this.TABLE, JSON.stringify(projects));
+    this.saveToUserData(JSON.stringify(projects) || '[]');
+  }
+
+  static saveToUserData(data: string) {
+    if (!fs.existsSync(this.DATA_FOLDER)) {
+      fs.mkdirSync(this.DATA_FOLDER);
+    }
+    fs.writeFileSync(this.DATA_FILE, data);
   }
 }

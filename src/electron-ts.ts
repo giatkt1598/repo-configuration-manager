@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import * as _ from 'electron';
-
+import _fs from 'node:fs';
 export const {
   BrowserView,
   BrowserWindow,
@@ -40,6 +40,6 @@ export const {
   webContents,
   webFrameMain,
 } = window.require('@electron/remote');
-export const fs = window.require('fs');
+export const fs: typeof _fs = window.require('fs');
 export const child_process = window.require('child_process');
 
