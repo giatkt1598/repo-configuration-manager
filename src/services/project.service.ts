@@ -4,7 +4,7 @@ import { CommonHelper } from '../utilities/common-helper';
 
 export class ProjectService {
   private static readonly TABLE = 'Project';
-  private static readonly DATA_FOLDER = `${app.getPath('documents')}\\RepoConfigManager`;
+  private static readonly DATA_FOLDER = `${app.getPath('appData')}\\RepoConfigManager`;
   private static readonly DATA_FILE = `${this.DATA_FOLDER}\\data.json`;
 
   static insert(project: Project) {
