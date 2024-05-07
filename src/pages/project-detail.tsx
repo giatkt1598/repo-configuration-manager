@@ -12,10 +12,11 @@ import {fs} from '../electron-ts';
 import { CommonHelper } from '../utilities/common-helper';
 import { Project, RepoConfigVariant } from '../models';
 import { ProjectService } from '../services/project.service';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { toast } from 'react-toastify';
 import { child_process } from '../electron-ts';
 import CircleIcon from '@mui/icons-material/Circle';
+import ProjectDetailMoreButton from '../components/project-detail-more-button';
+import ApprovalIcon from '@mui/icons-material/Approval';
 
 export const ProjectDetailPage = () => {
   const projectId = useParams().id;
@@ -103,11 +104,11 @@ export const ProjectDetailPage = () => {
     });
     setProject({...project});
     checkCurrentApplyVariant();
-    toast('Reset done!', {type:'success', position: 'bottom-right'});
+    CommonHelper.showSuccess('Reset done');
     setPageKey(p => p+1);
   }
 
-  function handleSave() {
+  function handleSave(message?:string) {
     project?.configVariants.forEach(v => {
       v.values.forEach((c) => {
         delete c.isTemp;
@@ -116,7 +117,7 @@ export const ProjectDetailPage = () => {
     ProjectService.update(project!);
     getProjectById(projectId!);
     checkCurrentApplyVariant();
-    toast('Save successful!', {type:'success', position: 'bottom-right'});
+    CommonHelper.showSuccess(message || 'Save successful');
   }
 
   function deleteConfigVariant() {
@@ -139,7 +140,7 @@ export const ProjectDetailPage = () => {
           return {...p!};
         });
     
-        handleSave();
+        handleSave('Delete successful');
       },
     })
   }
@@ -214,7 +215,7 @@ export const ProjectDetailPage = () => {
         alert(error);
       } else {
         checkCurrentApplyVariant();
-        CommonHelper.showSuccess(`Discard change config for "${project!.name}" is successful.`);
+        CommonHelper.showSuccess(`Discard change config for "${project!.name}" is successful`);
       }
     });
   }
@@ -267,6 +268,13 @@ export const ProjectDetailPage = () => {
           {project.configVariants?.map((variant, idx) => (
             <TabPanel key={variant.id} value={idx + ''}>
               <Stack spacing={2} direction={'row'} className='mt-2'>
+                <Button variant='contained' onClick={applyConfigVariant} style={{minWidth: 130}}>
+                  <div className='flex flex-row gap-2 items-center'>
+                    <ApprovalIcon />
+                    <span style={{transform: 'translateY(3px)'}}>Apply</span>
+                  </div>
+                </Button>
+
                 <TextField sx={{width: 300}} variant='outlined' 
                   defaultValue={project.configVariants[activeTab]?.name} 
                   label='Name'
@@ -293,14 +301,11 @@ export const ProjectDetailPage = () => {
 
                 </Stack>
                 <div className='flex-1'/>
-                <IconButton onClick={deleteConfigVariant}>
-                  <DeleteIcon className='text-red-500' />
-                </IconButton>
-
-                <Button variant='outlined' onClick={discardChange}>Discard Changes</Button>
-                <Button variant='outlined' onClick={resetToCurrent}>Reset To Current</Button>
-                <Button variant='outlined' onClick={handleSave}>Save</Button>
-                <Button variant='contained' onClick={applyConfigVariant}>Apply</Button>
+                <ProjectDetailMoreButton 
+                  onDelete={deleteConfigVariant}
+                  onDiscardChanges={discardChange}
+                  onSave={handleSave}
+                  onResetToCurrent={resetToCurrent}/>
               </Stack>
               <div className='m-3'>
                 <Divider/>

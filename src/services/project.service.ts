@@ -40,11 +40,20 @@ export class ProjectService {
   }
 
   private static setList(projects: Project[]) {
+    projects.forEach(p => {
+      const itemDefault = p.configVariants.find(x => x.isDefault);
+      if (itemDefault) {
+        p.configVariants.splice(p.configVariants.indexOf(itemDefault), 1);
+        p.configVariants.unshift(itemDefault);
+      }
+    });
+
+    
     localStorage.setItem(this.TABLE, JSON.stringify(projects));
     this.saveToUserData(JSON.stringify(projects, null, 4) || '[]');
   }
 
-  static saveToUserData(data: string) {
+  private static saveToUserData(data: string) {
     if (!fs.existsSync(this.DATA_FOLDER)) {
       fs.mkdirSync(this.DATA_FOLDER);
     }
@@ -52,7 +61,7 @@ export class ProjectService {
     fs.writeFileSync(this.DATA_FILE, data);
   }
 
-  static loadFromUserData(): Project[] {
+  private static loadFromUserData(): Project[] {
     if (!fs.existsSync(this.DATA_FILE)) {
       return [];
     }
